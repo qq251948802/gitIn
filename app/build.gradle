@@ -1,24 +1,68 @@
 apply plugin: 'com.android.application'
-
+//配置当前Module的编译参数
 android {
-    compileSdkVersion 28
+    compileSdkVersion app_config.compileSdkVersion //配置编译该模块的SDK版本
     defaultConfig {
-        applicationId "in.mango.com.in"
-        minSdkVersion 19
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        applicationId app_config.applicationId //指定App的包名
+        minSdkVersion app_config.minSdkVersion  //App最低支持的SDK版本
+        targetSdkVersion app_config.targetSdkVersion //Android构建工具的版本.基于哪个SDK版本开发
+        versionCode app_config.versionCode  //App内部的版本号，用于控制App升级
+        versionName app_config.versionName //App版本名称，也就是发布的版本号
+    }
+    signingConfigs{
+        release{
+            storeFile file('../git_in.jks')
+            storePassword '315236'
+            keyAlias 'in_key'
+            keyPassword '315236'
+        }
+        debug{
+            storeFile file('../git_in.jks')
+            storePassword '315236'
+            keyAlias 'in_key'
+            keyPassword '315236'
+        }
     }
     buildTypes {
+        //自定义构建类型release,debug,privitedebug
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            applicationIdSuffix "" //配置applicationId的后缀
+            minifyEnabled true
+            shrinkResources true //是否自动清理未使用的资源，默认值为false
+            zipAlignEnabled true //是否开启开启zipalign优化，提高apk运行效率
+            multiDexEnabled true //是否启用自动拆分多个Dex的功能
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'//事配置多个ProGuard配置文件
+            //配置不同的打包环境的值
+            buildConfigField("String", "APP_TYPE", "\"${type_release}\"")
+        }
+        debug {
+            debuggable true //表示是否支持断点调试
+            jniDebuggable true //表示是否可以调试NDK代码
+            buildConfigField("String", "APP_TYPE", "\"${type_debug}\"")
+        }
+//        privitedebug{
+//            applicationIdSuffix "" //配置applicationId的后缀
+//        }
+    }
+
+
+    android {
+        flavorDimensions "channel"
+        productFlavors {
+            beta {}//测试环境平台
+            prod {}//生产环境平台
+            xiaomi{}
+            qh360{}
+        }
+        productFlavors.all { flavor ->
+            flavor.manifestPlaceholders =[APP_CHANNEL_KEY_VALUE: name]//name代表的是"beta"，"prod"，即productFlavors中的每个声明
         }
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:28.+'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
+    implementation project(':base-module')
 }
